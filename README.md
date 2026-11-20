@@ -1,177 +1,140 @@
 # jev · youtube
 
-Extensión de Chrome/Safari que le pasa el título y la miniatura de cada vídeo de tu
-feed a [jev](https://openrouter.ai/typesafe/jev-1.14) y decide si te renta verlo. Lo
-que no, desaparece del feed.
+A Chrome/Safari extension that sends the title and thumbnail of every video in your
+YouTube home feed to [jev](https://openrouter.ai/typesafe/jev-1.14) and decides
+whether it's worth your time. What isn't, disappears from the feed.
 
-![popup de la extensión](docs/popup.png)
+![the extension popup](docs/popup.png)
 
 ![license](https://img.shields.io/github/license/lucabae/jev-youtube)
 ![manifest](https://img.shields.io/badge/manifest-v3-9be37a)
-![sin build](https://img.shields.io/badge/build-ninguno-lightgrey)
+![no build](https://img.shields.io/badge/build-none-lightgrey)
 
-## qué hace
+> The extension UI is in Spanish. The code, comments and docs are in English.
 
-- **solo actúa en el feed de inicio** (`youtube.com/`). en búsqueda, dentro de un
-  vídeo o en cualquier otra página no filtra: no decide ni oculta tarjetas.
-- lee cada tarjeta del feed (título, canal, si es short) y la manda a jev junto con
-  la miniatura, que es donde suele estar el texto que lo dice todo.
-- **solo vídeos largos**: shorts, directos, estrenos, vídeos solo para miembros,
-  posts, playlists, mixes y canales se ocultan sin llamar a jev.
-- **tope por recarga**: como mucho `maxPerLoad` llamadas a jev (20 por defecto). lo
-  que no se haya filtrado se oculta: no queda nada sin pasar por el filtro. los
-  aciertos de caché no cuentan para el tope.
-- oculta lo que puntúa por debajo del corte. el corte lo pones tú.
-- quita shorts, miniaturas y avatares de canal, por separado. miniaturas y avatares
-  se quitan en todo youtube; los shorts también.
-- al ver un vídeo, quita la columna de recomendados (`#related`).
-- **caché en disco**: cada vídeo se pregunta una sola vez. si cambias tus gustos o
-  el corte, la caché se tira y se vuelve a decidir.
-- lista de canales que nunca se quitan y lista de vetados, editables desde el menú
-  `⋮` de cada vídeo o desde los ajustes. en el menú, *quitar este canal para
-  siempre* lo añade a los vetados.
-- tope de llamadas por hora, para que no se te vaya la mano si scrolleas mucho.
-- **historial de decisiones**: los ajustes guardan las últimas 50 decisiones con
-  título, canal, corte y motivo. puedes marcar cada una como acertada o fallada.
+## what it does
 
-## por qué jev y no un chat normal
-
-jev es un modelo de decisión de Typesafe. no escribe texto: le mandas un `state` y
-una pregunta tipada, y te devuelve un número con probabilidades. eso es justo lo que
-queremos (un score de 0 a 1, sin parsear prosa) y sale mucho más barato, porque los
-tokens de salida son gratis.
-
-**el endpoint** no es `/api/v1/chat/completions`. es:
-
-```
-POST https://openrouter.ai/api/alpha/decisions
-```
-
-```json
-{
-  "model": "typesafe/jev-1.14",
-  "state": [
-    "titulo: ...\ncanal: ...",
-    { "type": "image_url", "image_url": { "url": "data:image/jpeg;base64,..." } }
-  ],
-  "questions": {
-    "encaje": { "type": "score", "instructions": "...", "criteria": ["...", "...", "...", "..."] },
-    "short":  { "type": "noul", "instructions": "es un short vertical" }
-  }
-}
-```
-
-devuelve:
-
-```json
-{
-  "answers": {
-    "encaje": { "type": "score", "score": 2.6, "confidence": 0.71, "probabilities": {} },
-    "short":  { "type": "noul", "noul": 0.03 }
-  },
-  "usage": { "input_tokens": 812, "cost": 0.0000341 }
-}
-```
-
-el `score` viene en la escala de los niveles (0..3 con cuatro niveles), así que aquí
-se normaliza a 0..1 dividiendo por 3.
+- **only works on the home feed** (`youtube.com/`). In search, on a watch page or
+  anywhere else it does nothing: it neither decides nor hides cards.
+- reads every feed card (title, channel, whether it's a short) and sends it to jev
+  together with the thumbnail, which is where the text that gives it away usually is.
+- **long videos only**: shorts, live streams, premieres, members-only videos, posts,
+  playlists, mixes and channels are hidden without calling jev.
+- **per-load cap**: at most `maxPerLoad` jev calls (20 by default). Whatever hasn't
+  been filtered gets hidden, so nothing slips through unfiltered. Cache hits don't
+  count towards the cap.
+- hides anything scoring below the threshold. The threshold is yours.
+- removes shorts, thumbnails and channel avatars, each one separately. Thumbnails and
+  avatars are removed across YouTube; shorts too.
+- while watching a video, it removes the recommendations column (`#related`).
+- **on-disk cache**: each video is asked about once. If you change your taste or the
+  threshold, the cache is dropped and everything is decided again.
+- allow list and block list, editable from the `⋮` menu on each video or from the
+  settings page. In the menu, *remove this channel for good* adds it to the block
+  list.
+- hourly call limit, so a long scroll session can't burn through your credits.
+- **decision history**: settings keep the last 50 decisions with title, channel,
+  threshold and reason. You can mark each one as right or wrong.
 
 ## steer taste
 
-Con las decisiones marcadas como falladas (las acertadas no se envían, son ruido), un
-botón manda el texto de gustos actual más esa lista a `openai/gpt-6-luna`, que
-reescribe tus gustos conservando lo que ya había y añadiendo los matices. La lista va
-en dos grupos, porque el sentido depende de qué hizo el filtro:
+Mark the decisions the filter got wrong (right ones aren't sent, they're noise) and
+press *steer taste*. Your current taste text plus those decisions go to
+`openai/gpt-6-luna`, which rewrites your taste keeping what was already there and
+adding the nuance. The list goes in two groups, because the meaning depends on what
+the filter did:
 
-| decisión | lo que significa |
+| decision | what it means |
 | --- | --- |
-| ocultado y marcado como fallo | lo querías |
-| dejado pasar y marcado como fallo | te sobraba |
+| hidden, marked wrong | you wanted it |
+| let through, marked wrong | you didn't |
 
-Se guarda en `storage.local`, así que sobrevive a recargar la extensión. El modelo es
-configurable desde los ajustes.
+It's stored in `storage.local`, so it survives reloading the extension. The model is
+configurable from the settings page.
 
-## el coste
+![steer taste](docs/steer.png)
 
-- `typesafe/jev-1.14`: **$0.042 por millón de tokens de entrada**, salida gratis.
-- la miniatura `hqdefault` es 480×360 → ~250 tokens, ~20 KB. es la **más pequeña que
-  jev acepta** (pide mínimo 256 px por lado, así que `mqdefault` de 320×180 vale,
-  pero `default` de 120×90 la rechazan con un 400).
-- un vídeo típico sale por **~$0.00004**. mil vídeos, cuatro céntimos.
+## cost
 
-## montarlo
+- `typesafe/jev-1.14`: **$0.042 per million input tokens**, output is free.
+- the `hqdefault` thumbnail is 480×360 → ~250 tokens, ~20 KB. It's the **smallest jev
+  accepts** (it needs at least 256 px per side, so `mqdefault` at 320×180 works, but
+  `default` at 120×90 gets a 400).
+- a typical video costs **~$0.00004**. A thousand videos, four cents.
 
-Necesitas una API key de [OpenRouter](https://openrouter.ai/keys) con algo de saldo.
+## install
 
-1. `chrome://extensions` → activa *modo de desarrollador* → *cargar descomprimida* →
-   elige esta carpeta.
-2. abre el icono, pega tu API key y escribe tus gustos.
-3. dale a *probar jev* para ver que responde antes de fiarte.
+You need an [OpenRouter API key](https://openrouter.ai/keys) with some credit on it.
 
-En Edge y Brave es el mismo proceso (`edge://extensions`, `brave://extensions`).
+1. `chrome://extensions` → enable *Developer mode* → *Load unpacked* → pick this
+   folder.
+2. Open the icon, paste your API key and write down your taste.
+3. Hit *test jev* to check it answers before trusting it.
 
-### en safari
+Same process on Edge and Brave (`edge://extensions`, `brave://extensions`).
 
-macOS 26+ / Safari 26+ tiene lo mismo que Chrome: **ajustes → developer → añadir
-extensión temporal**. eliges esta carpeta y ya está, sin cuenta de Apple.
+### on Safari
 
-el problema es que la extensión temporal **se descarga cada vez que cierras Safari**.
-si lo vas a usar a diario, lo suyo es firmarla con un *personal team* de Apple ID
-gratis (`xcrun safari-web-extension-packager`), y así aguanta un año. eso sí, pide
-tener Xcode instalado.
+macOS 26+ / Safari 26+ has the same as Chrome: **Settings → Developer → Add temporary
+extension**. Pick this folder and you're done, no Apple account needed.
 
-## ajustes
+The catch is that the temporary extension **is removed every time you quit Safari**.
+If you're going to use it daily, sign it with a free Apple ID *personal team*
+(`xcrun safari-web-extension-packager`) and it lasts a year. That needs Xcode
+installed.
 
-![página de ajustes](docs/options.png)
+## settings
 
-`⋮` de cada vídeo → canales vetados al momento. La página de ajustes completa
-(`decisiones, canales y caché` en el popup) añade:
+![the settings page](docs/options.png)
 
-- canales que nunca se quitan y canales vetados
-- calidad de la miniatura (`hqdefault` barata, `hq720` más nítida y más cara)
-- tope de vídeos filtrados por recarga y límite de llamadas por hora
-- modelo para *steer taste*
-- borrar caché y estadísticas
-- historial de decisiones con acertada/fallada y el botón de *steer taste*
+`⋮` on each video → block channels on the spot. The full settings page (`decisiones,
+canales y caché` in the popup) adds:
 
-## privacidad
+- allow list and block list
+- thumbnail quality (`hqdefault` cheap, `hq720` sharper and pricier)
+- per-load video cap and hourly call limit
+- model for *steer taste*
+- clear cache and stats
+- decision history with right/wrong marks and the *steer taste* button
 
-- la API key **solo se guarda en `storage.local` de tu navegador** y solo se envía a
-  `openrouter.ai` en la cabecera `Authorization`. no hay servidor propio ni telemetría.
-- lo único que sale de tu máquina es lo que hace falta para decidir: **título, canal
-  y miniatura** del vídeo, más el texto de tus gustos. todo va a OpenRouter, que lo
-  pasa al modelo. el historial de decisiones y las listas de canales no salen nunca.
-- la extensión **no lee** tu historial de YouTube, tu cuenta ni tus cookies: solo el
-  DOM de la página que ya tienes abierta.
+## privacy
 
-## estructura
+- the API key **is only stored in your browser's `storage.local`** and is only sent
+  to `openrouter.ai` in the `Authorization` header. No own server, no telemetry.
+- the only thing leaving your machine is what's needed to decide: **title, channel
+  and thumbnail** of the video, plus your taste text. All of it goes to OpenRouter,
+  which forwards it to the model. Decision history and channel lists never leave.
+- the extension **doesn't read** your YouTube history, account or cookies: only the
+  DOM of the page you already have open.
+
+## structure
 
 ```
 manifest.json
-src/background.js   la cola, la caché y la llamada a jev
-src/content.js      lee las tarjetas, oculta, y añade cosas al menú ⋮
-src/content.css     todo el ocultar va por aquí, para poder deshacerlo
-src/popup.html      API key + gustos + corte
-src/options.html    listas de canales, caché, decisiones y steer taste
-icons/              iconos 16/32/48/128
+src/background.js   the queue, the cache and the jev call
+src/content.js      reads cards, hides them, adds items to the ⋮ menu
+src/content.css     all hiding lives here, so it can be undone
+src/popup.html      API key + taste + threshold
+src/options.html    channel lists, cache, decisions and steer taste
+icons/              16/32/48/128 icons
 ```
 
-No hay build ni dependencias: editas, recargas la extensión y ya.
+No build step, no dependencies: edit, reload the extension, done.
 
-## limitaciones
+## limitations
 
-- si YouTube cambia el DOM del feed (pasa a menudo), la lectura de tarjetas puede
-  romperse. suele ser cuestión de ajustar los selectores de `src/content.js`.
-- el filtro depende de cómo describas tus gustos. con el campo vacío decide con un
-  criterio genérico ("cosas útiles antes que ruido") y no te va a conocer.
-- no es una herramienta para *no ver YouTube*: es para que el feed que ya ves merezca
-  la pena. no bloquea la web ni cuenta tiempo.
+- if YouTube changes the feed DOM (it happens often), card parsing can break. It's
+  usually a matter of adjusting the selectors in `src/content.js`.
+- the filter depends on how you describe your taste. Leave it empty and it decides
+  with a generic rule ("useful things before noise") and won't know you.
+- it's not a tool to *stop watching YouTube*: it's to make the feed you already see
+  worth it. It doesn't block the site or track time.
 
-## aviso
+## disclaimer
 
-Proyecto personal, sin relación con YouTube, Google, Apple ni OpenRouter. Úsalo bajo
-tu cuenta y tu cuota de API. El contenido de los vídeos es de sus autores.
+Personal project, not affiliated with YouTube, Google, Apple or OpenRouter. Use it
+with your own account and API quota. Video content belongs to its authors.
 
-## licencia
+## license
 
 [MIT](LICENSE) © 2026 Luca
