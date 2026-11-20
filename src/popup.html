@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>jev · youtube</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    width: 330px; margin: 0; padding: 14px;
+    font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  h1 { font-size: 13px; margin: 0 0 2px; letter-spacing: .01em; }
+  .sub { font-size: 11px; opacity: .55; margin-bottom: 12px; }
+  label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; opacity: .6; margin: 12px 0 5px; }
+  textarea, input[type=text], input[type=password], select {
+    width: 100%; padding: 7px 9px; border-radius: 8px; font: inherit;
+    border: 1px solid rgba(128,128,128,.35); background: transparent; color: inherit;
+  }
+  textarea { resize: vertical; min-height: 92px; line-height: 1.4; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .row > * { flex: 1; }
+  .btn {
+    width: 100%; margin-top: 12px; padding: 8px; border-radius: 8px; cursor: pointer;
+    border: 1px solid rgba(128,128,128,.35); background: transparent; color: inherit;
+    font: inherit; font-weight: 600;
+  }
+  .btn:hover { background: rgba(128,128,128,.12); }
+  .btn.go { background: #9be37a; border-color: #9be37a; color: #0b0b0b; }
+  .btn.go:hover { background: #8ad86a; }
+  .toggle { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 12px; }
+  .toggle input { flex: 0 0 auto; width: auto; }
+  .status { margin-top: 10px; font-size: 11px; min-height: 16px; line-height: 1.35; }
+  .status.ok { color: #2e8b57; }
+  .status.err { color: #c0392b; }
+  .hint { font-size: 10.5px; opacity: .5; margin-top: 5px; }
+  .link { font-size: 11px; opacity: .6; cursor: pointer; text-decoration: underline; background: none; border: 0; color: inherit; padding: 0; }
+  hr { border: 0; border-top: 1px solid rgba(128,128,128,.2); margin: 14px 0 0; }
+  .stats { display: flex; justify-content: space-between; font-size: 11px; opacity: .6; margin-top: 10px; }
+</style>
+</head>
+<body>
+  <h1>jev · youtube</h1>
+  <div class="sub">le pregunta a jev si el vídeo te renta</div>
+
+  <label for="key">openrouter api key</label>
+  <input id="key" type="password" placeholder="sk-or-v1-…" autocomplete="off" spellcheck="false">
+  <div class="hint">se queda en tu mac, va directa a openrouter</div>
+
+  <label for="taste">tus gustos</label>
+  <textarea id="taste" placeholder="arte, ciencia, matemáticas, programación. no quiero noticias, ni videojuegos, ni streamers."></textarea>
+  <div class="hint">se guarda solo al salir del campo</div>
+
+  <label for="threshold">corte</label>
+  <div class="row">
+    <input id="threshold" type="text" inputmode="decimal" value="0.45" style="flex:0 0 70px">
+    <span class="hint" style="margin:0">por debajo de esto se oculta</span>
+  </div>
+
+  <div class="toggle"><input id="enabled" type="checkbox"><label for="enabled" style="margin:0;text-transform:none;letter-spacing:0;opacity:1;font-size:12px">activo</label></div>
+  <div class="toggle"><input id="hideShorts" type="checkbox"><label for="hideShorts" style="margin:0;text-transform:none;letter-spacing:0;opacity:1;font-size:12px">quitar shorts</label></div>
+  <div class="toggle"><input id="hideThumbs" type="checkbox"><label for="hideThumbs" style="margin:0;text-transform:none;letter-spacing:0;opacity:1;font-size:12px">quitar miniaturas</label></div>
+  <div class="toggle"><input id="hideAvatars" type="checkbox"><label for="hideAvatars" style="margin:0;text-transform:none;letter-spacing:0;opacity:1;font-size:12px">quitar avatares de canal</label></div>
+  <div class="toggle"><input id="showScore" type="checkbox"><label for="showScore" style="margin:0;text-transform:none;letter-spacing:0;opacity:1;font-size:12px">enseñar el % de encaje</label></div>
+
+  <button class="btn go" id="save">guardar</button>
+  <button class="btn" id="test">probar jev</button>
+
+  <div class="status" id="status"></div>
+
+  <div class="stats">
+    <span id="stats">—</span>
+    <button class="link" id="opts">decisiones, canales y caché</button>
+  </div>
+
+  <hr>
+  <div class="hint" style="margin-top:8px">modelo: typesafe/jev-1.14 · decisions api</div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

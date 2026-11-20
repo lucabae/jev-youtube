@@ -1,0 +1,123 @@
+/* todo va por css: es reversible y no cuesta cpu */
+
+/* ---------- shorts ---------- */
+html[data-jev-shorts="on"] [data-jev-reel="1"],
+html[data-jev-shorts="on"] ytd-reel-shelf-renderer,
+html[data-jev-shorts="on"] ytd-rich-shelf-renderer[is-shorts],
+html[data-jev-shorts="on"] ytd-reel-item-renderer,
+html[data-jev-shorts="on"] ytm-shorts-lockup-view-model,
+html[data-jev-shorts="on"] ytd-guide-entry-renderer:has(a[title="Shorts"]),
+html[data-jev-shorts="on"] ytd-mini-guide-entry-renderer[aria-label="Shorts"] {
+  display: none !important;
+}
+
+/* ---------- lo que jev dice que no, y lo que no es un video largo ---------- */
+html[data-jev-enabled="on"] [data-jev-hidden="1"] {
+  display: none !important;
+}
+
+/* ---------- miniaturas, en todo youtube ---------- */
+html[data-jev-thumbs="on"]
+  :is(
+    ytd-thumbnail,
+    a#thumbnail,
+    ytd-playlist-thumbnail,
+    ytd-thumbnail #thumbnail,
+    ytd-playlist-thumbnail #thumbnail
+  ) {
+  background: rgba(128, 128, 128, 0.1) !important;
+  border-radius: 10px;
+  background-image: none !important;
+}
+
+html[data-jev-thumbs="on"]
+  :is(
+    ytd-thumbnail,
+    a#thumbnail,
+    ytd-playlist-thumbnail,
+    ytd-thumbnail #thumbnail,
+    ytd-playlist-thumbnail #thumbnail
+  )
+  :is(img, yt-image, picture, #mouseover-overlay, ytd-moving-thumbnail-renderer) {
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* la vista previa que sale al pasar el raton tambien es una miniatura */
+html[data-jev-thumbs="on"] ytd-video-preview {
+  display: none !important;
+}
+
+/* ---------- avatares de canal ---------- */
+html[data-jev-avatars="on"]
+  :is(
+    ytd-rich-item-renderer,
+    ytd-video-renderer,
+    ytd-compact-video-renderer,
+    ytd-grid-video-renderer,
+    ytd-playlist-video-renderer
+  )
+  :is(#avatar, #avatar-link, ytd-channel-name) img {
+  visibility: hidden !important;
+}
+
+html[data-jev-avatars="on"]
+  :is(ytd-rich-item-renderer, ytd-video-renderer, ytd-compact-video-renderer)
+  #avatar {
+  background: rgba(128, 128, 128, 0.14) !important;
+  border-radius: 50%;
+}
+
+/* ---------- al ver un video, fuera recomendados ---------- */
+html[data-jev-watch="on"] ytd-watch-next-secondary-results-renderer,
+html[data-jev-watch="on"] #related {
+  display: none !important;
+}
+
+/* si la columna no tiene chat, se quita entera para no dejar el hueco */
+html[data-jev-watch="on"] ytd-watch-flexy #secondary:not(:has(ytd-live-chat-frame)) {
+  display: none !important;
+}
+
+/* ---------- chapa con el porcentaje ---------- */
+.jev-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  vertical-align: middle;
+  color: #0b0b0b;
+  background: #9be37a;
+  font-family: Roboto, Arial, sans-serif;
+  flex: 0 0 auto;
+}
+
+/* ---------- items del menu de tres puntos ---------- */
+.jev-menu-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 16px;
+  min-height: 36px;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: Roboto, Arial, sans-serif;
+  color: var(--yt-spec-text-primary, #0f0f0f);
+  border-radius: 10px;
+}
+.jev-menu-item:hover {
+  background: var(--yt-spec-10-percent-layer, rgba(0, 0, 0, 0.06));
+}
+.jev-menu-sub {
+  font-size: 11px;
+  line-height: 14px;
+  opacity: 0.6;
+}
+.jev-menu-sep {
+  height: 1px;
+  margin: 6px 0;
+  background: var(--yt-spec-10-percent-layer, rgba(0, 0, 0, 0.1));
+}

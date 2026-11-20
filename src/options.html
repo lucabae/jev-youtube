@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>jev · youtube — ajustes</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    max-width: 680px; margin: 40px auto; padding: 0 20px 60px;
+    font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; opacity: .55; margin: 30px 0 8px; }
+  .sub { opacity: .55; font-size: 13px; }
+  textarea, input[type=text] {
+    width: 100%; padding: 8px 10px; border-radius: 8px; font: inherit;
+    border: 1px solid rgba(128,128,128,.35); background: transparent; color: inherit;
+  }
+  textarea { min-height: 120px; resize: vertical; }
+  .item { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+  .item input { flex: 1; }
+  .x {
+    flex: 0 0 auto; width: 30px; height: 30px; border-radius: 8px; cursor: pointer;
+    border: 1px solid rgba(128,128,128,.35); background: transparent; color: inherit;
+  }
+  .x:hover { background: rgba(200,60,50,.15); border-color: rgba(200,60,50,.5); }
+  .btn {
+    padding: 7px 12px; border-radius: 8px; cursor: pointer; font: inherit;
+    border: 1px solid rgba(128,128,128,.35); background: transparent; color: inherit;
+  }
+  .btn:hover { background: rgba(128,128,128,.12); }
+  .btn.go { background: #9be37a; border-color: #9be37a; color: #0b0b0b; font-weight: 600; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .hint { font-size: 12px; opacity: .5; margin-top: 6px; }
+  .hint.err { color: #c0392b; opacity: 1; }
+  .danger { color: #c0392b; border-color: rgba(192,57,43,.4); }
+  .status { font-size: 12px; min-height: 18px; margin-top: 12px; }
+  .status.ok { color: #2e8b57; }
+  .status.err { color: #c0392b; }
+  .decs { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+  .dec {
+    display: flex; gap: 10px; align-items: center; padding: 8px 10px;
+    border: 1px solid rgba(128,128,128,.25); border-radius: 10px;
+  }
+  .dec.good { border-color: rgba(46,139,87,.55); background: rgba(46,139,87,.08); }
+  .dec.bad { border-color: rgba(192,57,43,.55); background: rgba(192,57,43,.08); }
+  .dec-main { flex: 1; min-width: 0; }
+  .dec-title {
+    font-size: 13px; font-weight: 600; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  .dec-meta { font-size: 11px; opacity: .55; margin-top: 2px; }
+  .dec-fb { display: flex; gap: 4px; flex: 0 0 auto; }
+  .fb {
+    width: 32px; height: 30px; border-radius: 8px; cursor: pointer; font-size: 14px;
+    border: 1px solid rgba(128,128,128,.35); background: transparent; color: inherit;
+  }
+  .fb:hover { background: rgba(128,128,128,.14); }
+  .fb.good.on { background: rgba(46,139,87,.25); border-color: rgba(46,139,87,.7); }
+  .fb.bad.on { background: rgba(192,57,43,.25); border-color: rgba(192,57,43,.7); }
+  .preview {
+    margin-top: 12px; padding: 10px 12px; border-radius: 10px; white-space: pre-wrap;
+    font-size: 12.5px; line-height: 1.5; background: rgba(128,128,128,.1);
+  }
+  hr { border: 0; border-top: 1px solid rgba(128,128,128,.2); margin: 32px 0; }
+</style>
+</head>
+<body>
+  <h1>jev · youtube</h1>
+  <div class="sub">listas de canales y caché. los gustos y la key están en el popup.</div>
+
+  <h2>canales que nunca se quitan</h2>
+  <div id="allow-list"></div>
+  <div class="row">
+    <input type="text" id="allow-new" placeholder="nombre del canal">
+    <button class="btn" id="allow-add">añadir</button>
+  </div>
+
+  <h2>canales vetados</h2>
+  <div id="deny-list"></div>
+  <div class="row">
+    <input type="text" id="deny-new" placeholder="nombre del canal">
+    <button class="btn" id="deny-add">añadir</button>
+  </div>
+  <div class="hint">también lo puedes hacer desde el menú ⋮ de cada vídeo</div>
+
+  <hr>
+
+  <h2>calidad de la miniatura</h2>
+  <div class="row">
+    <select id="thumbQuality" style="padding:7px 10px;border-radius:8px;border:1px solid rgba(128,128,128,.35);background:transparent;color:inherit;font:inherit">
+      <option value="hqdefault">hqdefault (480×360, barata)</option>
+      <option value="hq720">hq720 (más texto, más tokens)</option>
+    </select>
+  </div>
+  <div class="hint">
+    hqdefault son unos 250–300 tokens por imagen. hq720 lee mejor el texto pequeño
+    pero cuesta bastante más. jev cobra solo input, a $0.042 / millón.
+  </div>
+
+  <h2>vídeos filtrados por recarga</h2>
+  <div class="row">
+    <input type="text" id="maxPerLoad" inputmode="numeric" style="flex:0 0 90px">
+    <span class="hint" style="margin:0">máximo de llamadas a jev cada recarga. el resto del feed se oculta.</span>
+  </div>
+  <div class="hint">los aciertos de caché no cuentan: ya están pagados.</div>
+
+  <h2>límite de llamadas</h2>
+  <div class="row">
+    <input type="text" id="budget" inputmode="numeric" style="flex:0 0 90px">
+    <span class="hint" style="margin:0">por hora. al llegar, se oculta lo que quede sin filtrar.</span>
+  </div>
+
+  <h2>modelo para steer taste</h2>
+  <div class="row">
+    <input type="text" id="steerModel" spellcheck="false" placeholder="openai/gpt-6-luna">
+  </div>
+  <div class="hint">el que reescribe tus gustos cuando pulsas “steer taste”.</div>
+
+  <div class="row" style="margin-top:16px">
+    <button class="btn go" id="save">guardar</button>
+    <button class="btn" id="clear">borrar caché</button>
+    <button class="btn" id="reset-stats">borrar estadísticas</button>
+    <span class="status" id="status"></span>
+  </div>
+
+  <hr>
+
+  <h2>últimas 50 decisiones</h2>
+  <div class="hint">
+    marca si el filtro acertó. “steer taste” manda solo las marcadas como falladas
+    a gpt‑6 luna, que reescribe tus gustos conservando lo que ya había. las
+    acertadas no se envían: no aportan nada.
+  </div>
+  <div id="decisions" class="decs"><div class="hint">todavía no hay decisiones</div></div>
+  <div class="row" style="margin-top:14px">
+    <button class="btn go" id="steer">steer taste</button>
+    <span class="hint" id="steer-status" style="margin:0"></span>
+  </div>
+  <div class="preview" id="steer-out" hidden></div>
+  <div class="hint" id="steer-before-hint" hidden>cómo estaba antes, por si quieres volver atrás:</div>
+  <div class="preview" id="steer-before" hidden></div>
+
+  <script src="options.js"></script>
+</body>
+</html>
